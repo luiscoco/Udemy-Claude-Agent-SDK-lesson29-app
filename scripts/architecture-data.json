@@ -1,0 +1,273 @@
+{
+  "lanes": [
+    "Student UI",
+    "TypeScript host",
+    "SDK session",
+    "Review broker",
+    "Lab files"
+  ],
+  "arrows": [
+    [
+      0,
+      1,
+      "1. Validate the experiment and prediction"
+    ],
+    [
+      1,
+      4,
+      "2. Create the disposable workspace"
+    ],
+    [
+      1,
+      2,
+      "3. Choose an explicit or omitted mode"
+    ],
+    [
+      2,
+      1,
+      "4. Pass bounded operations to SDK permissions"
+    ],
+    [
+      2,
+      3,
+      "5. Count the actual callback decisions"
+    ],
+    [
+      1,
+      2,
+      "6. Keep the streaming input alive"
+    ],
+    [
+      1,
+      2,
+      "7. Start the actual SDK query"
+    ],
+    [
+      2,
+      1,
+      "8. Preserve the reported permission mode"
+    ],
+    [
+      1,
+      4,
+      "9. Verify the pre-review file state"
+    ],
+    [
+      0,
+      1,
+      "10. Resolve a single-use review decision"
+    ],
+    [
+      1,
+      2,
+      "11. Await the actual mode-change control"
+    ],
+    [
+      4,
+      1,
+      "12. Verify output independently"
+    ],
+    [
+      1,
+      0,
+      "13. Show the live review and acknowledgement"
+    ]
+  ],
+  "steps": [
+    {
+      "number": 1,
+      "title": "Validate the experiment and prediction",
+      "source": "src/modes.ts",
+      "code": "export function validateConfig(value: unknown): RunConfig {\n  if (\n    !value ||\n    typeof value !== \"object\" ||\n    Array.isArray(value) ||\n    !MODES.includes((value as RunConfig).mode)\n  )",
+      "language": "typescript",
+      "explanation": "The browser selects fixed classroom experiments. It cannot supply arbitrary permission modes, paths, commands or mode-change controls.",
+      "firstLine": 88,
+      "lastLine": 94,
+      "anchors": [
+        "export function validateConfig(value: unknown): RunConfig {"
+      ],
+      "sourceSHA256": "2a7987504d5650284ab8a4c8c2752bc7fd4092ee5508fe34ef5d371d773104cf",
+      "narration": "Step 1. The browser selects fixed classroom experiments. It cannot supply arbitrary permission modes, paths, commands or mode-change controls. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 2,
+      "title": "Create the disposable workspace",
+      "source": "src/workspace.ts",
+      "code": "const root = resolve(parent, randomUUID()),\n    cwd = join(root, \"project\"),\n    home = join(root, \"home\"),\n    sdkHome = join(root, \"sdk\");\n  const r = relative(parent, root);\n  if (!r || r.startsWith(\"..\") || isAbsolute(r))\n    throw new Error(\"Invalid classroom workspace.\");",
+      "language": "typescript",
+      "explanation": "A verified temporary directory contains a read-only lesson fixture and an absent output. The host checks the fixture and output before bounded cleanup.",
+      "firstLine": 13,
+      "lastLine": 19,
+      "anchors": [
+        "const root = resolve(parent, randomUUID()),"
+      ],
+      "sourceSHA256": "73b729970705c32aaef6b4a655f9a8869d3a0f1e8de0933e874306a20d6e9559",
+      "narration": "Step 2. A verified temporary directory contains a read-only lesson fixture and an absent output. The host checks the fixture and output before bounded cleanup. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 3,
+      "title": "Choose an explicit or omitted mode",
+      "source": "src/agent.ts",
+      "code": "...(s.permissionMode ? { permissionMode: s.permissionMode } : {}),\n    ...(s.permissionMode === \"plan\"\n      ? { planModeInstructions: planWorkflow }\n      : {}),\n    allowDangerouslySkipPermissions: s.permissionMode === \"bypassPermissions\",",
+      "language": "typescript",
+      "explanation": "The omitted branch does not send permissionMode. Other branches pass an explicit value and supply the required TypeScript opt-in for bypass.",
+      "firstLine": 73,
+      "lastLine": 77,
+      "anchors": [
+        "...(s.permissionMode ? { permissionMode: s.permissionMode } : {}),"
+      ],
+      "sourceSHA256": "67d8a04e76888d52dfd92318c2a3ee2b94ca25a250755796d5db11886cf934d9",
+      "narration": "Step 3. The omitted branch does not send permissionMode. Other branches pass an explicit value and supply the required TypeScript opt-in for bypass. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 4,
+      "title": "Pass bounded operations to SDK permissions",
+      "source": "src/agent.ts",
+      "code": "const pass = hostAllows(\n                workspace.cwd,\n                input.tool_name,\n                input.tool_input as Record<string, unknown>,\n              );\n              record({\n                phase: \"hook\",\n                tool: input.tool_name,",
+      "language": "typescript",
+      "explanation": "The guard checks the exact fixture read and fixed output content, then passes valid requests without approving them. Mode and rule behavior remains observable.",
+      "firstLine": 104,
+      "lastLine": 111,
+      "anchors": [
+        "const pass = hostAllows("
+      ],
+      "sourceSHA256": "67d8a04e76888d52dfd92318c2a3ee2b94ca25a250755796d5db11886cf934d9",
+      "narration": "Step 4. The guard checks the exact fixture read and fixed output content, then passes valid requests without approving them. Mode and rule behavior remains observable. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 5,
+      "title": "Count the actual callback decisions",
+      "source": "src/agent.ts",
+      "code": "canUseTool: async (name) => {\n      record({ phase: \"callback\", tool: name, decision: \"deny\", turn });\n      return {\n        behavior: \"deny\",\n        message:\n          \"Classroom policy: no approval at this stage. Accept the denial and do not retry. The host can switch mode after a separate plan review.\",\n      };",
+      "language": "typescript",
+      "explanation": "The host denies unresolved calls. Compare callback counts with real native feedback, successful completion and file contents instead of assuming every mode prompts.",
+      "firstLine": 148,
+      "lastLine": 154,
+      "anchors": [
+        "canUseTool: async (name) => {"
+      ],
+      "sourceSHA256": "67d8a04e76888d52dfd92318c2a3ee2b94ca25a250755796d5db11886cf934d9",
+      "narration": "Step 5. The host denies unresolved calls. Compare callback counts with real native feedback, successful completion and file contents instead of assuming every mode prompts. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 6,
+      "title": "Keep the streaming input alive",
+      "source": "src/agent.ts",
+      "code": "async function* input(): AsyncGenerator<SDKUserMessage> {\n    yield {\n      type: \"user\",\n      message: {\n        role: \"user\",\n        content:\n          PROMPTS[c.mode] +\n          `\\nRead: ${join(workspace.cwd, \"lesson.txt\")}\\nWrite: ${join(workspace.cwd, \"result.txt\")}`,",
+      "language": "typescript",
+      "explanation": "The first user message is followed by a gate. Only the reviewed switching experiment can release a second task on the same query.",
+      "firstLine": 210,
+      "lastLine": 217,
+      "anchors": [
+        "async function* input(): AsyncGenerator<SDKUserMessage> {"
+      ],
+      "sourceSHA256": "67d8a04e76888d52dfd92318c2a3ee2b94ca25a250755796d5db11886cf934d9",
+      "narration": "Step 6. The first user message is followed by a gate. Only the reviewed switching experiment can release a second task on the same query. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 7,
+      "title": "Start the actual SDK query",
+      "source": "src/agent.ts",
+      "code": "const run = query({ prompt: input(), options });\n  const names = new Map<string, string>();\n  try {",
+      "language": "typescript",
+      "explanation": "One running Query handles the fixed task. The switching experiment reuses this object rather than starting a second session.",
+      "firstLine": 234,
+      "lastLine": 236,
+      "anchors": [
+        "const run = query({ prompt: input(), options });"
+      ],
+      "sourceSHA256": "67d8a04e76888d52dfd92318c2a3ee2b94ca25a250755796d5db11886cf934d9",
+      "narration": "Step 7. One running Query handles the fixed task. The switching experiment reuses this object rather than starting a second session. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 8,
+      "title": "Preserve the reported permission mode",
+      "source": "src/agent.ts",
+      "code": "reportedModes.push(message.permissionMode);\n          emit({\n            type: \"initialized\",\n            model: message.model,\n            sessionId: message.session_id,\n            tools: message.tools,\n            permissionMode: message.permissionMode,",
+      "language": "typescript",
+      "explanation": "Record actual initialization and mode-status reports separately from configured values. An observed Write does not establish a hidden classifier invocation.",
+      "firstLine": 248,
+      "lastLine": 254,
+      "anchors": [
+        "reportedModes.push(message.permissionMode);"
+      ],
+      "sourceSHA256": "67d8a04e76888d52dfd92318c2a3ee2b94ca25a250755796d5db11886cf934d9",
+      "narration": "Step 8. Record actual initialization and mode-status reports separately from configured values. An observed Write does not establish a hidden classifier invocation. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 9,
+      "title": "Verify the pre-review file state",
+      "source": "src/agent.ts",
+      "code": "beforeSwitchFileCreated = (await workspace.inspect()).fileCreated;\n            reviewApproved = await (review\n              ? review(text, controller.signal)\n              : requestReview(text, emit, controller.signal));\n            emit({ type: \"review-resolved\", approved: reviewApproved });\n            if (!reviewApproved) {",
+      "language": "typescript",
+      "explanation": "Before asking for review, check the actual output state. The browser receives the real first-turn result rather than a fabricated plan.",
+      "firstLine": 308,
+      "lastLine": 313,
+      "anchors": [
+        "beforeSwitchFileCreated = (await workspace.inspect()).fileCreated;"
+      ],
+      "sourceSHA256": "67d8a04e76888d52dfd92318c2a3ee2b94ca25a250755796d5db11886cf934d9",
+      "narration": "Step 9. Before asking for review, check the actual output state. The browser receives the real first-turn result rather than a fabricated plan. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 10,
+      "title": "Resolve a single-use review decision",
+      "source": "src/review.ts",
+      "code": "pending.set(id, (approved) => {\n      pending.delete(id);\n      signal.removeEventListener(\"abort\", abort);\n      resolve(approved);\n    });\n    signal.addEventListener(\"abort\", abort, { once: true });\n    emit({ type: \"review-required\", id, plan });",
+      "language": "typescript",
+      "explanation": "The review ID resolves one pending decision and is removed after use. Cancellation clears pending state. No mode change is requested on rejection.",
+      "firstLine": 19,
+      "lastLine": 25,
+      "anchors": [
+        "pending.set(id, (approved) => {"
+      ],
+      "sourceSHA256": "c87aeaf57d798214e2e64c12ef638266dc2c9561c7543b29f9d445e5966b4986",
+      "narration": "Step 10. The review ID resolves one pending decision and is removed after use. Cancellation clears pending state. No mode change is requested on rejection. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 11,
+      "title": "Await the actual mode-change control",
+      "source": "src/agent.ts",
+      "code": "await run.setPermissionMode(\"acceptEdits\");\n            switchAcknowledged = true;\n            turn = 2;\n            emit({\n              type: \"mode-change\",\n              from: \"plan\",\n              to: \"acceptEdits\",\n              acknowledged: true,",
+      "language": "typescript",
+      "explanation": "After approval, await acceptEdits on the same Query, record the acknowledgement and only then release the second user message.",
+      "firstLine": 317,
+      "lastLine": 324,
+      "anchors": [
+        "await run.setPermissionMode(\"acceptEdits\");"
+      ],
+      "sourceSHA256": "67d8a04e76888d52dfd92318c2a3ee2b94ca25a250755796d5db11886cf934d9",
+      "narration": "Step 11. After approval, await acceptEdits on the same Query, record the acknowledgement and only then release the second user message. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 12,
+      "title": "Verify output independently",
+      "source": "src/workspace.ts",
+      "code": "fileCreated: fileContents !== null,\n        fileContents,\n        fixtureUnchanged:\n          (await readFile(join(cwd, \"lesson.txt\"), \"utf-8\")) === LESSON,\n      };",
+      "language": "typescript",
+      "explanation": "Host checks compare the actual output with the expected classroom content and confirm that the fixture remains unchanged. Model text alone is not execution proof.",
+      "firstLine": 32,
+      "lastLine": 36,
+      "anchors": [
+        "fileCreated: fileContents !== null,"
+      ],
+      "sourceSHA256": "73b729970705c32aaef6b4a655f9a8869d3a0f1e8de0933e874306a20d6e9559",
+      "narration": "Step 12. Host checks compare the actual output with the expected classroom content and confirm that the fixture remains unchanged. Model text alone is not execution proof. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 13,
+      "title": "Show the live review and acknowledgement",
+      "source": "src/client.ts",
+      "code": "if (e.type === \"mode-change\") {\n    json(\"mode-change\", e);\n    $(\"review-status\").textContent =\n      \"SDK acknowledged acceptEdits. The second turn can now perform the fixed write.\";\n  }",
+      "language": "typescript",
+      "explanation": "Render the actual mode-change event and explain that the second turn follows acknowledgement. Keep the real first-turn plan visible for review.",
+      "firstLine": 45,
+      "lastLine": 49,
+      "anchors": [
+        "if (e.type === \"mode-change\") {"
+      ],
+      "sourceSHA256": "789c018ee35091a496553b3b2fde38a0da8a7f6d09f4d44a8e32fe23eb588ed4",
+      "narration": "Step 13. Render the actual mode-change event and explain that the second turn follows acknowledgement. Keep the real first-turn plan visible for review. This source excerpt shows the corresponding application statement."
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Agent SDK LESSON 29 · Architecture and &lt;em&gt;UML workflow.&lt;/em&gt;</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/code-highlighting.css"></head><body><main><div class="brand"><a href="/">How <span>Claude Agent SDK</span> Works</a><span class="badge">LESSON 29 / PERMISSION MODES</span></div><header class="hero"><div><div class="eyebrow">COMPARE · REVIEW · SWITCH</div><h1>Architecture and <em>UML workflow.</em></h1><p class="lead">Every workflow step includes its corresponding coloured code excerpt.</p></div><img src="/astronaut.png" alt="Course astronaut mascot"></header><nav class="nav" aria-label="Application sections"><a href="/">Application lab</a><a href="/learn.html">What you will learn</a><a href="/run.html">How to run</a><a href="/architecture.html" aria-current="page">Architecture & workflow</a><a href="/walkthrough.html">Code walkthrough</a><button id="theme" type="button">Dark mode</button></nav><p class="note">This diagram groups setup and runtime observations across alternative experiments. The review broker holds one decision; the same SDK Query continues only after an approved, acknowledged mode change.</p><a class="button" href="/architecture.svg" download>Download UML SVG</a><div class="diagram"><img src="/architecture.svg" alt="Thirteen permission-mode and review workflow steps"></div><section class="step workflow-step" id="workflow-step-01"><span class="number">01</span><h3>1. Validate the experiment and prediction</h3><p>The browser selects fixed classroom experiments. It cannot supply arbitrary permission modes, paths, commands or mode-change controls.</p><p class="source">Source: src/modes.ts · lines 88–94 · selected source; surrounding code omitted</p><pre><code class="language-typescript">export function validateConfig(value: unknown): RunConfig {
+  if (
+    !value ||
+    typeof value !== &quot;object&quot; ||
+    Array.isArray(value) ||
+    !MODES.includes((value as RunConfig).mode)
+  )</code></pre></section><section class="step workflow-step" id="workflow-step-02"><span class="number">02</span><h3>2. Create the disposable workspace</h3><p>A verified temporary directory contains a read-only lesson fixture and an absent output. The host checks the fixture and output before bounded cleanup.</p><p class="source">Source: src/workspace.ts · lines 13–19 · selected source; surrounding code omitted</p><pre><code class="language-typescript">const root = resolve(parent, randomUUID()),
+    cwd = join(root, &quot;project&quot;),
+    home = join(root, &quot;home&quot;),
+    sdkHome = join(root, &quot;sdk&quot;);
+  const r = relative(parent, root);
+  if (!r || r.startsWith(&quot;..&quot;) || isAbsolute(r))
+    throw new Error(&quot;Invalid classroom workspace.&quot;);</code></pre></section><section class="step workflow-step" id="workflow-step-03"><span class="number">03</span><h3>3. Choose an explicit or omitted mode</h3><p>The omitted branch does not send permissionMode. Other branches pass an explicit value and supply the required TypeScript opt-in for bypass.</p><p class="source">Source: src/agent.ts · lines 73–77 · selected source; surrounding code omitted</p><pre><code class="language-typescript">...(s.permissionMode ? { permissionMode: s.permissionMode } : {}),
+    ...(s.permissionMode === &quot;plan&quot;
+      ? { planModeInstructions: planWorkflow }
+      : {}),
+    allowDangerouslySkipPermissions: s.permissionMode === &quot;bypassPermissions&quot;,</code></pre></section><section class="step workflow-step" id="workflow-step-04"><span class="number">04</span><h3>4. Pass bounded operations to SDK permissions</h3><p>The guard checks the exact fixture read and fixed output content, then passes valid requests without approving them. Mode and rule behavior remains observable.</p><p class="source">Source: src/agent.ts · lines 104–111 · selected source; surrounding code omitted</p><pre><code class="language-typescript">const pass = hostAllows(
+                workspace.cwd,
+                input.tool_name,
+                input.tool_input as Record&lt;string, unknown&gt;,
+              );
+              record({
+                phase: &quot;hook&quot;,
+                tool: input.tool_name,</code></pre></section><section class="step workflow-step" id="workflow-step-05"><span class="number">05</span><h3>5. Count the actual callback decisions</h3><p>The host denies unresolved calls. Compare callback counts with real native feedback, successful completion and file contents instead of assuming every mode prompts.</p><p class="source">Source: src/agent.ts · lines 148–154 · selected source; surrounding code omitted</p><pre><code class="language-typescript">canUseTool: async (name) =&gt; {
+      record({ phase: &quot;callback&quot;, tool: name, decision: &quot;deny&quot;, turn });
+      return {
+        behavior: &quot;deny&quot;,
+        message:
+          &quot;Classroom policy: no approval at this stage. Accept the denial and do not retry. The host can switch mode after a separate plan review.&quot;,
+      };</code></pre></section><section class="step workflow-step" id="workflow-step-06"><span class="number">06</span><h3>6. Keep the streaming input alive</h3><p>The first user message is followed by a gate. Only the reviewed switching experiment can release a second task on the same query.</p><p class="source">Source: src/agent.ts · lines 210–217 · selected source; surrounding code omitted</p><pre><code class="language-typescript">async function* input(): AsyncGenerator&lt;SDKUserMessage&gt; {
+    yield {
+      type: &quot;user&quot;,
+      message: {
+        role: &quot;user&quot;,
+        content:
+          PROMPTS[c.mode] +
+          `\nRead: ${join(workspace.cwd, &quot;lesson.txt&quot;)}\nWrite: ${join(workspace.cwd, &quot;result.txt&quot;)}`,</code></pre></section><section class="step workflow-step" id="workflow-step-07"><span class="number">07</span><h3>7. Start the actual SDK query</h3><p>One running Query handles the fixed task. The switching experiment reuses this object rather than starting a second session.</p><p class="source">Source: src/agent.ts · lines 234–236 · selected source; surrounding code omitted</p><pre><code class="language-typescript">const run = query({ prompt: input(), options });
+  const names = new Map&lt;string, string&gt;();
+  try {</code></pre></section><section class="step workflow-step" id="workflow-step-08"><span class="number">08</span><h3>8. Preserve the reported permission mode</h3><p>Record actual initialization and mode-status reports separately from configured values. An observed Write does not establish a hidden classifier invocation.</p><p class="source">Source: src/agent.ts · lines 248–254 · selected source; surrounding code omitted</p><pre><code class="language-typescript">reportedModes.push(message.permissionMode);
+          emit({
+            type: &quot;initialized&quot;,
+            model: message.model,
+            sessionId: message.session_id,
+            tools: message.tools,
+            permissionMode: message.permissionMode,</code></pre></section><section class="step workflow-step" id="workflow-step-09"><span class="number">09</span><h3>9. Verify the pre-review file state</h3><p>Before asking for review, check the actual output state. The browser receives the real first-turn result rather than a fabricated plan.</p><p class="source">Source: src/agent.ts · lines 308–313 · selected source; surrounding code omitted</p><pre><code class="language-typescript">beforeSwitchFileCreated = (await workspace.inspect()).fileCreated;
+            reviewApproved = await (review
+              ? review(text, controller.signal)
+              : requestReview(text, emit, controller.signal));
+            emit({ type: &quot;review-resolved&quot;, approved: reviewApproved });
+            if (!reviewApproved) {</code></pre></section><section class="step workflow-step" id="workflow-step-10"><span class="number">10</span><h3>10. Resolve a single-use review decision</h3><p>The review ID resolves one pending decision and is removed after use. Cancellation clears pending state. No mode change is requested on rejection.</p><p class="source">Source: src/review.ts · lines 19–25 · selected source; surrounding code omitted</p><pre><code class="language-typescript">pending.set(id, (approved) =&gt; {
+      pending.delete(id);
+      signal.removeEventListener(&quot;abort&quot;, abort);
+      resolve(approved);
+    });
+    signal.addEventListener(&quot;abort&quot;, abort, { once: true });
+    emit({ type: &quot;review-required&quot;, id, plan });</code></pre></section><section class="step workflow-step" id="workflow-step-11"><span class="number">11</span><h3>11. Await the actual mode-change control</h3><p>After approval, await acceptEdits on the same Query, record the acknowledgement and only then release the second user message.</p><p class="source">Source: src/agent.ts · lines 317–324 · selected source; surrounding code omitted</p><pre><code class="language-typescript">await run.setPermissionMode(&quot;acceptEdits&quot;);
+            switchAcknowledged = true;
+            turn = 2;
+            emit({
+              type: &quot;mode-change&quot;,
+              from: &quot;plan&quot;,
+              to: &quot;acceptEdits&quot;,
+              acknowledged: true,</code></pre></section><section class="step workflow-step" id="workflow-step-12"><span class="number">12</span><h3>12. Verify output independently</h3><p>Host checks compare the actual output with the expected classroom content and confirm that the fixture remains unchanged. Model text alone is not execution proof.</p><p class="source">Source: src/workspace.ts · lines 32–36 · selected source; surrounding code omitted</p><pre><code class="language-typescript">fileCreated: fileContents !== null,
+        fileContents,
+        fixtureUnchanged:
+          (await readFile(join(cwd, &quot;lesson.txt&quot;), &quot;utf-8&quot;)) === LESSON,
+      };</code></pre></section><section class="step workflow-step" id="workflow-step-13"><span class="number">13</span><h3>13. Show the live review and acknowledgement</h3><p>Render the actual mode-change event and explain that the second turn follows acknowledgement. Keep the real first-turn plan visible for review.</p><p class="source">Source: src/client.ts · lines 45–49 · selected source; surrounding code omitted</p><pre><code class="language-typescript">if (e.type === &quot;mode-change&quot;) {
+    json(&quot;mode-change&quot;, e);
+    $(&quot;review-status&quot;).textContent =
+      &quot;SDK acknowledged acceptEdits. The second turn can now perform the fixed write.&quot;;
+  }</code></pre></section><footer>CLAUDE AGENT SDK · LESSON 29 · MODES · CALLBACKS · LIVE SWITCH<br>TypeScript · local runtime · API key stays on the server</footer></main><script src="/navigation.js"></script><script src="/prism.js"></script><script src="/prism-markup.min.js"></script><script src="/prism-yaml.min.js"></script><script src="/prism-markdown.min.js"></script><script src="/prism-python.min.js"></script><script src="/code-highlighting.js"></script><script src="/marked.umd.js"></script><script src="/purify.min.js"></script></body></html>
